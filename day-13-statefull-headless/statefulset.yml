@@ -3,54 +3,43 @@ kind: StatefulSet
 metadata:
   name: mysql
 spec:
-  serviceName: mysql
   replicas: 2
+  serviceName: mysql
   selector:
     matchLabels:
       app: mysql
-
   template:
     metadata:
       labels:
         app: mysql
     spec:
       containers:
-      - name: mysql
-        image: mysql:8.0.39
+      - image: mysql:8.0.39
+        name: mysql
         env:
-        - name: MYSQL_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysecret
-              key: ROOT_PASSWORD
-
+         - name: MYSQL_ROOT_PASSWORD
+           valueFrom: 
+            secretKeyRef: 
+             key: ROOT_PASSWORD
+             name: mysecret
         ports:
         - containerPort: 3306
           name: mysql
-
         volumeMounts:
-        - name: mysql-storage
+        - name: mysql-persistent-storage
           mountPath: /var/lib/mysql
-
-  volumeClaimTemplates:
-  - metadata:
-      name: mysql-storage
-    spec:
-      accessModes:
-      - ReadWriteOnce
-      storageClassName: manual
-      resources:
-        requests:
-          storage: 5Gi
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql
 spec:
-  clusterIP: None
-  selector:
-    app: mysql
   ports:
   - port: 3306
-    targetPort: 3306
+  selector:
+    app: mysql
+  clusterIP: None  #headless service
